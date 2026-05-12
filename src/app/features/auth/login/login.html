@@ -1,0 +1,48 @@
+<div class="login-wrapper">
+  <div class="glass-card">
+
+    <div class="card-header">
+      <div class="logo-ring">
+        <img src="assets/images/logo-cordillera.png" alt="Grupo Cordillera" class="logo">
+      </div>
+      <h2>Grupo Cordillera</h2>
+      <p>Gestión Corporativa</p>
+    </div>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="card-body">
+        
+        <div class="ios-group">
+          <div class="ios-row">
+            <span class="row-icon"><i class="ti ti-mail"></i></span>
+            <input type="email" formControlName="email" placeholder="Correo institucional">
+          </div>
+          <div class="ios-row">
+            <span class="row-icon"><i class="ti ti-lock"></i></span>
+            <input [type]="showPwd ? 'text' : 'password'" formControlName="password" placeholder="Contraseña">
+            <button type="button" class="eye-btn" (click)="showPwd = !showPwd">
+              <i [class]="showPwd ? 'ti ti-eye-off' : 'ti ti-eye'"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="aux-row">
+          <a routerLink="/recuperar" class="forgot">¿Olvidaste tu contraseña?</a>
+        </div>
+
+        <div class="alert" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+        <button type="submit" class="btn-primary" [disabled]="loginForm.invalid || loading">
+          <i class="ti ti-arrow-right"></i>
+          {{ loading ? 'Iniciando…' : 'Iniciar sesión' }}
+        </button>
+      </div>
+    </form>
+
+    <div class="card-footer">
+      <i class="ti ti-shield-check"></i>
+      <span>Conexión cifrada · Solo colaboradores</span>
+    </div>
+
+  </div>
+</div>
