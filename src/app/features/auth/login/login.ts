@@ -26,7 +26,7 @@ export class LoginComponent {
       email: ['', [
         Validators.required, 
         Validators.maxLength(30), 
-        Validators.pattern(/^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z]{2,4}$/) // Formato de correo real
+        Validators.pattern(/^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z]{2,4}$/) 
       ]],
       password: ['', [
         Validators.required, 
@@ -36,7 +36,6 @@ export class LoginComponent {
     });
   }
 
-  // Helpers visuales
   esCampoInvalido(campo: string): boolean {
     const control = this.loginForm.get(campo);
     return !!(control && control.invalid && (control.touched || control.dirty));
@@ -47,7 +46,6 @@ export class LoginComponent {
     return !!(control && control.valid && (control.touched || control.dirty));
   }
 
-  // Mensajes dinámicos (ver image_6.png)
   get errorEmail(): string {
     const f = this.loginForm.get('email');
     if (f?.hasError('required')) return 'El correo es obligatorio.';
@@ -65,7 +63,6 @@ export class LoginComponent {
   }
 
   onSubmit(): void {
-    // Si el formulario es inválido, marcamos todo como "tocado" para que salten los textos rojos
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       this.errorMessage = 'Por favor, corrija los errores marcados en rojo.';
@@ -75,15 +72,22 @@ export class LoginComponent {
     this.loading = true;
     this.errorMessage = '';
 
-    // Bypass temporal para desarrollo: cualquier dato pasa
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
-        // Redirección forzada para pruebas (recuerda que auth.ts devuelve rol Cajero)
-        this.router.navigate(['/caja']);
+        const rol = this.authService.obtenerRol();
+        
+        if (rol === 'Gerente' || rol === 'Admin') {
+          this.router.navigate(['/dashboard']);
+        } else if (rol === 'Cajero' || rol === 'Bodeguero') {
+          this.router.navigate(['/caja']);
+        } else {
+          this.router.navigate(['/caja']);
+        }
       },
-      error: () => {
+      error: (err) => {
         this.loading = false;
-        this.errorMessage = 'Error de conexión.';
+        this.errorMessage = 'Credenciales incorrectas o usuario no encontrado.';
+        console.error('Detalles del error:', err);
       }
     });
   }
