@@ -1,1 +1,23 @@
-/* You can add global styles to this file, and also import other style files */
+/* REINICIO GLOBAL - ELIMINA BORDES BLANCOS */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100vh;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+/* EFECTO PARALLAX DEL FONDO */
+body {
+  background-image: url('assets/images/cordillera-fondo.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed; /* Esto deja el fondo estático */
+  background-color: #0A192F;
+}

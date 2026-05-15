@@ -1,9 +1,10 @@
 import { Routes } from '@angular/router';
-import { LoginComponent } from './features/auth/login/login';
-import { roleGuard } from './core/security/role-guard';
+// Quitamos el ".component" del final de la ruta
+import { LoginComponent } from './features/auth/login/login'; 
+import { VentaComponent } from './features/caja/venta/venta'; 
 
 export const routes: Routes = [
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
-  { path: '', redirectTo: '/login', pathMatch: 'full' },
-  { path: '**', redirectTo: '/login' }
+  { path: 'caja', component: VentaComponent }
 ];

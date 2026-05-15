@@ -1,0 +1,87 @@
+<div class="venta-container">
+  <header class="venta-header">
+    <div class="brand">
+      <img src="assets/images/logo-cordillera.png" alt="Logo" class="mini-logo">
+      <span>POS Cordillera</span>
+    </div>
+    <div class="user-info">
+      <span>Caja 01 | Op: <strong>{{ cajeroNombre }}</strong></span>
+    </div>
+  </header>
+
+  <main class="venta-content">
+    
+    <section class="scanner-section">
+      <div class="input-box">
+        <form [formGroup]="ventaForm" (ngSubmit)="buscarProducto()">
+          <input 
+            type="text" 
+            formControlName="codigoProducto" 
+            placeholder="Escanee código de barras o ingrese ID..."
+            autofocus>
+          <button type="submit" [disabled]="ventaForm.invalid">AGREGAR</button>
+        </form>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Cód</th>
+              <th>Descripción</th>
+              <th class="text-right">Precio</th>
+              <th class="text-center">Cant</th>
+              <th class="text-right">Total</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of carrito; let i = index">
+              <td class="col-gray">{{ item.codigo }}</td>
+              <td><strong>{{ item.nombre }}</strong></td>
+              <td class="text-right">${{ item.precio | number }}</td>
+              <td class="text-center">{{ item.cantidad }}</td>
+              <td class="text-right"><strong>${{ item.subtotal | number }}</strong></td>
+              <td class="text-center">
+                <button class="btn-delete" (click)="eliminarItem(i)">
+                  <i class="ti ti-x"></i>
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="carrito.length === 0">
+              <td colspan="6" class="empty-state">Boleta vacía. Escanee un producto para comenzar.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <aside class="summary-section">
+      <div class="summary-card">
+        <h3>RESUMEN</h3>
+        
+        <div class="summary-row">
+          <span class="label">Subtotal</span>
+          <span class="value">${{ totalVenta | number }}</span>
+        </div>
+        
+        <div class="summary-row total">
+          <span class="label">TOTAL</span>
+          <span class="value">${{ totalVenta | number }}</span>
+        </div>
+        
+        <div class="alert-box" *ngIf="mensajeError">
+          <i class="ti ti-alert-circle"></i> {{ mensajeError }}
+        </div>
+
+        <button 
+          class="btn-checkout" 
+          (click)="finalizarVenta()"
+          [disabled]="carrito.length === 0">
+          PROCESAR VENTA
+        </button>
+      </div>
+    </aside>
+    
+  </main>
+</div>

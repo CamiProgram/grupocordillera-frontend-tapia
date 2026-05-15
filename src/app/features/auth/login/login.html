@@ -1,9 +1,9 @@
-<div class="login-wrapper">
+<div class="login-page-container">
   <div class="glass-card">
 
     <div class="card-header">
       <div class="logo-ring">
-        <img src="assets/images/logo-cordillera.png" alt="Grupo Cordillera" class="logo">
+        <span class="logo-text">GC</span>
       </div>
       <h2>Grupo Cordillera</h2>
       <p>Gestión Corporativa</p>
@@ -13,35 +13,40 @@
       <div class="card-body">
         
         <div class="ios-group">
-          <div class="ios-row">
+          <div class="ios-row" [class.has-error]="esCampoInvalido('email')" [class.has-success]="esCampoValido('email')">
             <span class="row-icon"><i class="ti ti-mail"></i></span>
-            <input type="email" formControlName="email" placeholder="Correo institucional">
+            <input type="email" formControlName="email" placeholder="Correo institucional" maxlength="30">
           </div>
-          <div class="ios-row">
+          <div class="validation-msg" *ngIf="esCampoInvalido('email')">{{ errorEmail }}</div>
+
+          <div class="ios-row" [class.has-error]="esCampoInvalido('password')" [class.has-success]="esCampoValido('password')">
             <span class="row-icon"><i class="ti ti-lock"></i></span>
-            <input [type]="showPwd ? 'text' : 'password'" formControlName="password" placeholder="Contraseña">
-            <button type="button" class="eye-btn" (click)="showPwd = !showPwd">
-              <i [class]="showPwd ? 'ti ti-eye-off' : 'ti ti-eye'"></i>
+            <input [type]="showPwd ? 'text' : 'password'" formControlName="password" placeholder="Contraseña" maxlength="20">
+            
+            <button type="button" class="eye-btn" (click)="showPwd = !showPwd" tabindex="-1" title="Mostrar/Ocultar contraseña">
+              <i class="ti {{ showPwd ? 'ti-eye-off' : 'ti-eye' }}"></i>
             </button>
           </div>
+          <div class="validation-msg" *ngIf="esCampoInvalido('password')">{{ errorPassword }}</div>
+
         </div>
 
         <div class="aux-row">
           <a routerLink="/recuperar" class="forgot">¿Olvidaste tu contraseña?</a>
         </div>
 
-        <div class="alert" *ngIf="errorMessage">{{ errorMessage }}</div>
+        <div class="alert-box" *ngIf="errorMessage">{{ errorMessage }}</div>
 
-        <button type="submit" class="btn-primary" [disabled]="loginForm.invalid || loading">
+        <button type="submit" class="btn-primary" [disabled]="loading">
           <i class="ti ti-arrow-right"></i>
-          {{ loading ? 'Iniciando…' : 'Iniciar sesión' }}
+          {{ loading ? 'Verificando...' : 'Iniciar sesión' }}
         </button>
       </div>
     </form>
 
     <div class="card-footer">
-      <i class="ti ti-shield-check"></i>
-      <span>Conexión cifrada · Solo colaboradores</span>
+      <i class="ti ti-shield-lock"></i>
+      <span>Acceso Restringido · Grupo Cordillera 2026</span>
     </div>
 
   </div>
