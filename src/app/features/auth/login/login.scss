@@ -9,7 +9,6 @@ input[type="password"]::-ms-reveal { display: none; }
   justify-content: center;
   position: relative;
   
-  /* FONDO FIJO (como en styles.scss global, asegurado) */
   background-image: url('../../../../assets/images/cordillera-fondo.png');
   background-size: cover;
   background-position: center;
@@ -46,7 +45,6 @@ input[type="password"]::-ms-reveal { display: none; }
     display: flex; align-items: center; justify-content: center;
     border: 1px solid rgba(255, 255, 255, 0.1);
     
-    /* ESTILO DEL TEXTO GC ESTILIZADO */
     .logo-text {
       font-size: 32px;
       font-weight: 800;
@@ -72,28 +70,29 @@ input[type="password"]::-ms-reveal { display: none; }
   display: flex; align-items: center; height: 55px;
   padding: 0 15px; border-bottom: 1px solid rgba(255,255,255,0.05);
   transition: all 0.3s ease;
+  position: relative; /* <-- NECESARIO PARA EL OJO ABSOLUTO */
   
   .row-icon { width: 35px; color: rgba(255,255,255,0.3); font-size: 18px; }
   input {
     flex: 1; background: transparent; border: none; outline: none;
-    color: #fff; font-size: 16px; width: 100%;
+    color: #fff; font-size: 16px; width: 100%; padding-right: 40px; /* Espacio para el ojo */
     &::placeholder { color: rgba(255,255,255,0.25); }
   }
   
-  /* OJITO POSICIONADO CORRECTAMENTE SOLO EN SU FILA */
+  /* OJITO POSICIONADO CORRECTAMENTE */
   .eye-btn {
+    position: absolute;
+    right: 15px;
     background: none; border: none; color: #fff; opacity: 0.5;
     cursor: pointer; font-size: 20px; width: 40px; height: 100%;
     display: flex; align-items: center; justify-content: center;
     &:hover { opacity: 1; }
   }
 
-  /* ESTADOS DE VALIDACIÓN (ver image_6.png) */
   &.has-error { background: rgba(255, 69, 58, 0.1); .row-icon { color: #ff453a; } }
   &.has-success { .row-icon { color: #32d74b; } }
 }
 
-/* MENSAJE DE VALIDACIÓN ROJO INDIVIDUAL */
 .validation-msg {
   background: rgba(255, 69, 58, 0.1);
   color: #ff453a; font-size: 11px; padding: 5px 15px 10px 50px;

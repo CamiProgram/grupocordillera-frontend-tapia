@@ -1,10 +1,21 @@
 import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { AuthService } from './auth';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const token = localStorage.getItem('token_cordillera');
+  const authService = inject(AuthService);
+  const token = authService.obtenerToken();
+
+  // Si existe un token activo en la sesión, clonamos la petición y le inyectamos el Header
   if (token) {
-    const cloned = req.clone({ setHeaders: { Authorization: `Bearer ${token}` } });
-    return next(cloned);
+    const peticionClonada = req.clone({
+      setHeaders: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return next(peticionClonada);
   }
+
+  // Si no hay token (por ejemplo, en el login mismo), dejamos pasar la petición tal cual
   return next(req);
 };

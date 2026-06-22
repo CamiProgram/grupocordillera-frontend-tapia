@@ -1,52 +1,62 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { Observable, tap } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  // Apuntamos al nuevo puerto 8091 configurado en el docker-compose
-  private apiUrl = 'http://localhost:8091/api/auth/login'; 
-  
-  private logueado = new BehaviorSubject<boolean>(this.tieneToken());
+  // Apuntamos a la raíz del API Gateway (Puerto 8090)
+  private readonly API_URL = 'http://localhost:8090'; 
 
   constructor(private http: HttpClient) {}
 
-  login(credenciales: { email: string, password: string }): Observable<any> {
-    return this.http.post<any>(this.apiUrl, credenciales).pipe(
-      tap((res) => {
-        if (res.token) {
-          localStorage.setItem('token_cordillera', res.token);
+  login(credentials: { email: string; password: string }): Observable<any> {
+    // Concatenamos la ruta exacta aquí para que el Gateway sepa a dónde enrutar internamente
+    return this.http.post<any>(`${this.API_URL}/api/auth/login`, credentials).pipe(
+      tap(response => {
+        // Capturamos el token sin importar si Spring Boot lo llama 'token', 'jwt' o 'accessToken'
+        const tokenStr = response?.token || response?.jwt || response?.accessToken;
+        if (tokenStr) {
+          this.guardarToken(tokenStr);
         }
-        if (res.rol) {
-          localStorage.setItem('rol_cordillera', res.rol);
-        }
-        this.logueado.next(true);
-      }),
-      catchError(error => {
-        console.error('Error devuelto por el backend:', error);
-        return throwError(() => error);
       })
     );
   }
 
-  logout(): void {
-    localStorage.removeItem('token_cordillera');
-    localStorage.removeItem('rol_cordillera');
-    this.logueado.next(false);
+  guardarToken(token: string): void {
+    sessionStorage.setItem('jwt_token', token);
+  }
+
+  obtenerToken(): string | null {
+    return sessionStorage.getItem('jwt_token');
   }
 
   tieneToken(): boolean {
-    return !!localStorage.getItem('token_cordillera');
+    return !!this.obtenerToken();
   }
 
-  obtenerRol(): string | null {
-    return localStorage.getItem('rol_cordillera'); 
+  cerrarSesion(): void {
+    sessionStorage.removeItem('jwt_token');
   }
 
-  estaLogueado() {
-    return this.logueado.asObservable();
+  obtenerRol(): string {
+    const token = this.obtenerToken();
+    if (!token) return '';
+    
+    try {
+      const payload = token.split('.')[1];
+      const decodedPayload = window.atob(payload);
+      const json = JSON.parse(decodedPayload);
+      
+      // Muestra en consola exactamente qué datos trae tu token
+      //console.log('DEBUG TOKEN PAYLOAD:', json);
+      
+      // Dependiendo de tu Spring Security, el rol puede venir en 'rol' o en 'authorities'
+      return json.rol || json.role || ''; 
+    } catch (error) {
+      console.error('Error al decodificar el token de seguridad', error);
+      return '';
+    }
   }
 }

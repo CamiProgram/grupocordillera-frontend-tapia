@@ -26,7 +26,7 @@ export class LoginComponent {
       email: ['', [
         Validators.required, 
         Validators.maxLength(30), 
-        Validators.pattern(/^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[a-zA-Z]{2,4}$/) 
+        Validators.pattern(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/) 
       ]],
       password: ['', [
         Validators.required, 
@@ -50,7 +50,7 @@ export class LoginComponent {
     const f = this.loginForm.get('email');
     if (f?.hasError('required')) return 'El correo es obligatorio.';
     if (f?.hasError('maxlength')) return 'Máximo 30 caracteres.';
-    if (f?.hasError('pattern')) return 'Ingrese un correo institucional válido.';
+    if (f?.hasError('pattern')) return 'Ingrese un correo válido.';
     return '';
   }
 
@@ -74,20 +74,22 @@ export class LoginComponent {
 
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
-        const rol = this.authService.obtenerRol();
+        // Obtenemos el rol y lo pasamos a mayúsculas por si acaso
+        const rol = (this.authService.obtenerRol() || '').toUpperCase();
         
-        if (rol === 'Gerente' || rol === 'Admin') {
+        if (rol === 'GERENTE' || rol === 'ADMIN') {
           this.router.navigate(['/dashboard']);
-        } else if (rol === 'Cajero' || rol === 'Bodeguero') {
+        } else if (rol === 'CAJERO' || rol === 'BODEGUERO') {
           this.router.navigate(['/caja']);
         } else {
+          // Fallback por defecto si no reconoce el rol exacto
           this.router.navigate(['/caja']);
         }
       },
       error: (err) => {
         this.loading = false;
         this.errorMessage = 'Credenciales incorrectas o usuario no encontrado.';
-        console.error('Detalles del error:', err);
+        console.error('Detalles del error HTTP:', err);
       }
     });
   }
