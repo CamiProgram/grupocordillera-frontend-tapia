@@ -1,122 +1,210 @@
-/* Reset de iconos del navegador */
-input[type="password"]::-ms-reveal { display: none; }
+/* Variables de color corporativas */
+$primary-color: #0f172a;
+$secondary-color: #3b82f6;
+$text-main: #334155;
+$text-muted: #64748b;
+$error-color: #ef4444;
+$success-color: #10b981;
+$border-color: #e2e8f0;
 
-.login-page-container {
-  min-height: 100vh;
-  width: 100%;
+.login-wrapper {
   display: flex;
-  align-items: center;
   justify-content: center;
-  position: relative;
+  align-items: center;
+  min-height: 100vh;
+  font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  padding: 1rem;
   
-  background-image: url('../../../../assets/images/cordillera-fondo.png');
+  /* Al estar en la carpeta public, la URL nace directamente desde la raíz '/' */
+  background: linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.75)), 
+              url('/images/cordillera-fondo.png') no-repeat center center;
   background-size: cover;
-  background-position: center;
   background-attachment: fixed;
-  background-color: #0A192F;
-
-  &::before {
-    content: ''; position: absolute; inset: 0;
-    background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 100%);
-  }
 }
 
-.glass-card {
-  position: relative;
-  z-index: 1;
+.login-card {
+  background: white;
   width: 100%;
-  max-width: 350px;
-  background: rgba(30, 30, 35, 0.6);
-  backdrop-filter: blur(40px) saturate(150%);
-  border-radius: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
-  overflow: hidden;
+  max-width: 420px;
+  border-radius: 12px;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+  padding: 2.5rem;
+  box-sizing: border-box;
 }
 
-.card-header {
-  padding: 40px 20px 20px;
+.login-header {
   text-align: center;
-  
-  .logo-ring {
-    width: 85px; height: 85px; margin: 0 auto 15px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 22px;
-    display: flex; align-items: center; justify-content: center;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 2rem;
+
+  .logo-placeholder {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, $primary-color, $secondary-color);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
     
-    .logo-text {
-      font-size: 32px;
-      font-weight: 800;
-      color: #fff;
-      letter-spacing: -2px;
+    .logo-icon {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: white;
+      letter-spacing: 1px;
     }
   }
-  
-  h2 { color: #fff; font-size: 22px; margin: 0; font-weight: 600; }
-  p { color: rgba(255,255,255,0.4); font-size: 13px; margin-top: 5px; }
+
+  h2 {
+    color: $primary-color;
+    margin: 0 0 0.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  p {
+    color: $text-muted;
+    margin: 0;
+    font-size: 0.95rem;
+  }
 }
 
-.card-body { padding: 25px; }
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
 
-.ios-group {
-  background: rgba(255, 255, 255, 0.07);
-  border-radius: 16px;
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: $text-main;
+  }
+}
+
+.input-container {
+  display: flex;
+  align-items: center;
+  border: 2px solid $border-color;
+  border-radius: 8px;
+  background-color: white;
+  transition: all 0.2s ease;
   overflow: hidden;
-  margin-bottom: 15px;
-}
 
-.ios-row {
-  display: flex; align-items: center; height: 55px;
-  padding: 0 15px; border-bottom: 1px solid rgba(255,255,255,0.05);
-  transition: all 0.3s ease;
-  position: relative; /* <-- NECESARIO PARA EL OJO ABSOLUTO */
-  
-  .row-icon { width: 35px; color: rgba(255,255,255,0.3); font-size: 18px; }
+  &:focus-within {
+    border-color: $secondary-color;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  &.is-invalid {
+    border-color: $error-color;
+  }
+
+  &.is-valid {
+    border-color: $success-color;
+  }
+
   input {
-    flex: 1; background: transparent; border: none; outline: none;
-    color: #fff; font-size: 16px; width: 100%; padding-right: 40px; /* Espacio para el ojo */
-    &::placeholder { color: rgba(255,255,255,0.25); }
+    flex: 1;
+    border: none;
+    padding: 0.8rem 1rem;
+    font-size: 1rem;
+    color: $text-main;
+    outline: none;
+    background: transparent;
+
+    &::placeholder {
+      color: #94a3b8;
+    }
+
+    &::-ms-reveal,
+    &::-ms-clear {
+      display: none;
+    }
   }
-  
-  /* OJITO POSICIONADO CORRECTAMENTE */
-  .eye-btn {
-    position: absolute;
-    right: 15px;
-    background: none; border: none; color: #fff; opacity: 0.5;
-    cursor: pointer; font-size: 20px; width: 40px; height: 100%;
-    display: flex; align-items: center; justify-content: center;
-    &:hover { opacity: 1; }
+}
+
+.password-container {
+  position: relative;
+
+  .toggle-pwd-btn {
+    background: none;
+    border: none;
+    color: $secondary-color;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0 1rem;
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+
+    &:hover {
+      color: darken($secondary-color, 15%);
+    }
   }
-
-  &.has-error { background: rgba(255, 69, 58, 0.1); .row-icon { color: #ff453a; } }
-  &.has-success { .row-icon { color: #32d74b; } }
 }
 
-.validation-msg {
-  background: rgba(255, 69, 58, 0.1);
-  color: #ff453a; font-size: 11px; padding: 5px 15px 10px 50px;
-}
-
-.btn-primary {
-  width: 100%; height: 55px; border-radius: 16px; border: none;
-  background: #0a84ff; color: #fff; font-size: 17px; font-weight: 600;
-  cursor: pointer; margin-top: 20px;
-  box-shadow: 0 8px 15px rgba(10, 132, 255, 0.3);
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-  &:active:not(:disabled) { transform: scale(0.98); }
-}
-
-.card-footer {
-  padding: 20px; text-align: center; font-size: 11px;
-  color: rgba(255,255,255,0.25); border-top: 1px solid rgba(255,255,255,0.05);
-  display: flex; align-items: center; justify-content: center; gap: 6px;
+.error-text {
+  color: $error-color;
+  font-size: 0.8rem;
+  margin-top: 0.2rem;
 }
 
 .alert-box {
-  background: rgba(255, 69, 58, 0.15); color: #ff453a;
-  padding: 12px; border-radius: 12px; font-size: 13px; text-align: center;
-  margin-bottom: 15px; border: 1px solid rgba(255, 69, 58, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+
+  &.error {
+    background-color: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+  }
 }
 
-.forgot { color: #0a84ff; font-size: 13px; text-decoration: none; display: block; text-align: right; }
+.btn-submit {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: $secondary-color;
+  color: white;
+  border: none;
+  padding: 0.85rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-top: 0.5rem;
+
+  &:hover:not(:disabled) {
+    background-color: darken($secondary-color, 10%);
+  }
+
+  &:disabled {
+    background-color: #94a3b8;
+    cursor: not-allowed;
+  }
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

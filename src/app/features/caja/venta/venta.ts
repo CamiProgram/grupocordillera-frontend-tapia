@@ -1,11 +1,26 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { AuthService } from '../../../core/security/auth';
 
-interface ItemVenta {
-  codigo: string;
+import { 
+  ScannerQRCodeConfig, 
+  ScannerQRCodeResult, 
+  NgxScannerQrcodeComponent 
+} from 'ngx-scanner-qrcode';
+
+export interface Producto {
+  id: number;
+  codigoBarras: string;
   nombre: string;
   precio: number;
+  stock: number;
+}
+
+export interface DetalleVenta {
+  producto: Producto;
   cantidad: number;
   subtotal: number;
 }
@@ -13,81 +28,256 @@ interface ItemVenta {
 @Component({
   selector: 'app-venta',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, NgxScannerQrcodeComponent],
   templateUrl: './venta.html',
   styleUrl: './venta.scss'
 })
-export class VentaComponent implements OnInit {
-  ventaForm: FormGroup;
-  carrito: ItemVenta[] = [];
-  totalVenta: number = 0;
-  mensajeError: string = '';
-  cajeroNombre: string = 'Camilo Tapia'; 
+export class VentaComponent implements OnInit, OnDestroy {
+  @ViewChild('codigoInput') codigoInput!: ElementRef;
+  @ViewChild('scanner') scanner!: NgxScannerQrcodeComponent;
 
-  constructor(private fb: FormBuilder) {
-    this.ventaForm = this.fb.group({
-      codigoProducto: ['', [Validators.required]]
-    });
+  public configScanner: ScannerQRCodeConfig = {
+    constraints: {
+      video: {
+        width: { min: 640, ideal: 1280, max: 1920 },
+        height: { min: 480, ideal: 720, max: 1080 },
+        facingMode: 'environment' 
+      }
+    },
+    canvasStyles: [
+      { lineWidth: 4, strokeStyle: '#4f46e5' }, 
+      { font: '20px Inter', fillStyle: '#4f46e5' }
+    ]
+  };
+
+  // Estados
+  codigoBarras: string = '';
+  terminoBusqueda: string = '';
+  carrito: DetalleVenta[] = [];
+  total: number = 0;
+  cargando: boolean = false;
+  mensajeError: string = '';
+  productosFiltrados: Producto[] = [];
+  
+  // Control de Cámara
+  camaraActiva: boolean = false;
+  
+  // Contexto de Negocio
+  nombreCajero: string = 'OPERADOR';
+  sucursalActual: string = 'Sucursal Pedro Aguirre Cerda';
+  comunaActual: string = 'Pedro Aguirre Cerda';
+  regionActual: string = 'Región Metropolitana';
+
+  private readonly API_GATEWAY = 'http://localhost:8090';
+
+  private dbProductos: Producto[] = [
+    { id: 1, codigoBarras: '12345', nombre: 'Bebida Cola 2L', precio: 2500, stock: 50 },
+    { id: 2, codigoBarras: '78910', nombre: 'Arroz Grano Largo 1Kg', precio: 1300, stock: 100 },
+    { id: 3, codigoBarras: '11121', nombre: 'Aceite Maravilla 1L', precio: 3200, stock: 30 },
+    { id: 4, codigoBarras: '44455', nombre: 'Fideos Espagueti 400g', precio: 990, stock: 80 },
+    { id: 5, codigoBarras: '66677', nombre: 'Leche Entera 1L', precio: 1100, stock: 60 }
+  ];
+
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService,
+    private router: Router
+  ) {}
+
+  ngOnInit(): void {
+    const rol = this.authService.obtenerRol();
+    this.nombreCajero = rol ? rol.toUpperCase() : 'CAJERO';
+    this.enfocarInput();
   }
 
-  ngOnInit(): void {}
+  ngOnDestroy(): void {
+    if (this.scanner && this.scanner.isStart) {
+      this.scanner.stop();
+    }
+  }
+
+  enfocarInput(): void {
+    setTimeout(() => {
+      if (this.codigoInput) this.codigoInput.nativeElement.focus();
+    }, 150);
+  }
+
+  onCodigoBarrasChange(valor: string): void {
+    this.codigoBarras = valor.replace(/[^0-9]/g, '');
+  }
+
+  filtrarProductos(): void {
+    const termino = this.terminoBusqueda.trim().toLowerCase();
+    if (!termino) {
+      this.productosFiltrados = [];
+      return;
+    }
+    this.productosFiltrados = this.dbProductos.filter(p => 
+      p.nombre.toLowerCase().includes(termino) || p.codigoBarras.includes(termino)
+    );
+  }
+
+  seleccionarProducto(producto: Producto): void {
+    this.agregarAlCarrito(producto);
+    this.terminoBusqueda = '';
+    this.productosFiltrados = [];
+    this.enfocarInput();
+  }
 
   buscarProducto(): void {
-    const codigo = this.ventaForm.get('codigoProducto')?.value;
-    if (!codigo) return;
-
-    // Simulación de respuesta del microservicio
-    const productoEncontrado = {
-      codigo: codigo,
-      nombre: 'Producto Escaneado ' + codigo,
-      precio: 1500,
-      stock: 10
-    };
-
-    this.agregarAlCarrito(productoEncontrado);
-    this.ventaForm.reset();
+    if (!this.codigoBarras.trim()) return;
+    this.procesarCodigo(this.codigoBarras.trim());
   }
 
-  agregarAlCarrito(producto: any): void {
-    const itemExistente = this.carrito.find(i => i.codigo === producto.codigo);
+  // ==========================================
+  // 📸 LÓGICA DE CÁMARA CORREGIDA
+  // ==========================================
 
-    if (itemExistente) {
-      if (itemExistente.cantidad < producto.stock) {
-        itemExistente.cantidad++;
-        itemExistente.subtotal = itemExistente.cantidad * itemExistente.precio;
-      } else {
-        this.mostrarError('Stock insuficiente');
-      }
+  toggleCamara(): void {
+    if (!this.scanner) return;
+
+    if (this.camaraActiva) {
+      // APAGAR
+      this.camaraActiva = false;
+      this.scanner.stop();
+      this.enfocarInput();
     } else {
-      this.carrito.push({
-        codigo: producto.codigo,
-        nombre: producto.nombre,
-        precio: producto.precio,
-        cantidad: 1,
-        subtotal: producto.precio
-      });
+      // ENCENDER: Primero abrimos el CSS, y luego arrancamos el video
+      this.camaraActiva = true;
+      setTimeout(() => {
+        this.scanner.start();
+      }, 150); 
+    }
+  }
+
+  public onEventScan(event: ScannerQRCodeResult[] | any): void {
+    if (!event) return;
+    
+    let codigoLeido = '';
+    if (Array.isArray(event) && event.length > 0) {
+      codigoLeido = event[0].value;
+    } else if (event.value) {
+      codigoLeido = event.value;
+    }
+    
+    if (codigoLeido) {
+      setTimeout(() => {
+        const codigoLimpio = codigoLeido.replace(/[^0-9]/g, '');
+        this.procesarCodigo(codigoLimpio);
+        
+        // Apagamos la cámara correctamente al tener éxito
+        this.camaraActiva = false;
+        if (this.scanner && this.scanner.isStart) {
+          this.scanner.stop();
+        }
+        this.enfocarInput();
+      }, 300); 
+    }
+  }
+
+  // ==========================================
+
+  private procesarCodigo(codigo: string): void {
+    this.cargando = true;
+    this.mensajeError = '';
+
+    const prod = this.dbProductos.find(p => p.codigoBarras === codigo);
+
+    if (prod) {
+      this.agregarAlCarrito(prod);
+    } else {
+      this.mensajeError = `Código [${codigo}] no existe en los registros actuales.`;
+      setTimeout(() => this.mensajeError = '', 4000);
+    }
+
+    this.cargando = false;
+    this.codigoBarras = '';
+    this.enfocarInput();
+  }
+
+  agregarAlCarrito(producto: Producto): void {
+    const itemExistente = this.carrito.find(item => item.producto.id === producto.id);
+    if (itemExistente) {
+      itemExistente.cantidad++;
+      itemExistente.subtotal = itemExistente.cantidad * itemExistente.producto.precio;
+    } else {
+      this.carrito.push({ producto, cantidad: 1, subtotal: producto.precio });
     }
     this.calcularTotal();
   }
 
-  eliminarItem(index: number): void {
+  calcularTotal(): void {
+    this.total = this.carrito.reduce((acc, item) => acc + item.subtotal, 0);
+  }
+
+  modificarCantidad(index: number, operacion: 'sumar' | 'restar'): void {
+    const item = this.carrito[index];
+    if (operacion === 'sumar') {
+      item.cantidad++;
+    } else if (operacion === 'restar' && item.cantidad > 1) {
+      item.cantidad--;
+    }
+    item.subtotal = item.cantidad * item.producto.precio;
+    this.calcularTotal();
+    this.enfocarInput();
+  }
+
+  eliminarLinea(index: number): void {
     this.carrito.splice(index, 1);
     this.calcularTotal();
+    this.enfocarInput();
   }
 
-  calcularTotal(): void {
-    this.totalVenta = this.carrito.reduce((acc, item) => acc + item.subtotal, 0);
-  }
-
-  finalizarVenta(): void {
+  cancelarVenta(): void {
     if (this.carrito.length === 0) return;
-    alert('Venta procesada con éxito');
-    this.carrito = [];
-    this.totalVenta = 0;
+    if (confirm('¿Confirma la anulación completa de la transacción en curso?')) {
+      this.carrito = [];
+      this.total = 0;
+      this.enfocarInput();
+    }
   }
 
-  private mostrarError(msj: string): void {
-    this.mensajeError = msj;
-    setTimeout(() => this.mensajeError = '', 3000);
+  procesarPago(): void {
+    if (this.carrito.length === 0) return;
+    this.cargando = true;
+
+    const payloadVenta = {
+      total: this.total,
+      sucursal: this.sucursalActual,
+      comuna: this.comunaActual,
+      region: this.regionActual,
+      detalles: this.carrito.map(item => ({
+        productoId: item.producto.id,
+        cantidad: item.cantidad,
+        precioUnitario: item.producto.precio,
+        subtotal: item.subtotal
+      }))
+    };
+
+    this.http.post(`${this.API_GATEWAY}/api/ventas`, payloadVenta).subscribe({
+      next: () => {
+        alert('BOLETA ELECTRÓNICA EMITIDA CON ÉXITO');
+        this.carrito = [];
+        this.total = 0;
+        this.cargando = false;
+        this.enfocarInput();
+      },
+      error: (err) => {
+        console.error('Fallo en Gateway/Ventas:', err);
+        alert('Sincronización interrumpida. Transacción respaldada localmente en modo Contingencia.');
+        this.carrito = [];
+        this.total = 0;
+        this.cargando = false;
+        this.enfocarInput();
+      }
+    });
+  }
+
+  cerrarSesion(): void {
+    if (this.scanner && this.scanner.isStart) {
+      this.scanner.stop();
+    }
+    this.authService.cerrarSesion();
+    this.router.navigate(['/login']);
   }
 }

@@ -1,53 +1,64 @@
-<div class="login-page-container">
-  <div class="glass-card">
-
-    <div class="card-header">
-      <div class="logo-ring">
-        <span class="logo-text">GC</span>
+<div class="login-wrapper">
+  <div class="login-card">
+    
+    <div class="login-header">
+      <div class="logo-placeholder">
+        <span class="logo-icon">GC</span>
       </div>
       <h2>Grupo Cordillera</h2>
-      <p>Gestión Corporativa</p>
+      <p>Ingrese a su cuenta corporativa</p>
     </div>
 
-    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
-      <div class="card-body">
-        
-        <div class="ios-group">
-          <div class="ios-row" [class.has-error]="esCampoInvalido('email')" [class.has-success]="esCampoValido('email')">
-            <span class="row-icon"><i class="ti ti-mail"></i></span>
-            <input type="email" formControlName="email" placeholder="Correo institucional" maxlength="30">
-          </div>
-          <div class="validation-msg" *ngIf="esCampoInvalido('email')">{{ errorEmail }}</div>
-
-          <div class="ios-row" [class.has-error]="esCampoInvalido('password')" [class.has-success]="esCampoValido('password')">
-            <span class="row-icon"><i class="ti ti-lock"></i></span>
-            <input [type]="showPwd ? 'text' : 'password'" formControlName="password" placeholder="Contraseña" maxlength="20">
-            
-            <button type="button" class="eye-btn" (click)="showPwd = !showPwd" tabindex="-1" title="Mostrar/Ocultar contraseña">
-              <i class="ti {{ showPwd ? 'ti-eye-off' : 'ti-eye' }}"></i>
-            </button>
-          </div>
-          <div class="validation-msg" *ngIf="esCampoInvalido('password')">{{ errorPassword }}</div>
-
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+      
+      <div class="form-group">
+        <label for="email">Correo Electrónico</label>
+        <div class="input-container" [class.is-invalid]="esCampoInvalido('email')" [class.is-valid]="esCampoValido('email')">
+          <input 
+            id="email" 
+            type="email" 
+            formControlName="email" 
+            placeholder="usuario@cordillera.cl"
+            autocomplete="email">
         </div>
-
-        <div class="aux-row">
-          <a routerLink="/recuperar" class="forgot">¿Olvidaste tu contraseña?</a>
-        </div>
-
-        <div class="alert-box" *ngIf="errorMessage">{{ errorMessage }}</div>
-
-        <button type="submit" class="btn-primary" [disabled]="loading">
-          <i class="ti ti-arrow-right"></i>
-          {{ loading ? 'Verificando...' : 'Iniciar sesión' }}
-        </button>
+        <span class="error-text" *ngIf="esCampoInvalido('email')">
+          {{ errorEmail }}
+        </span>
       </div>
+
+      <div class="form-group">
+        <label for="password">Contraseña</label>
+        <div class="input-container password-container" [class.is-invalid]="esCampoInvalido('password')" [class.is-valid]="esCampoValido('password')">
+          <input 
+            id="password" 
+            [type]="showPwd ? 'text' : 'password'" 
+            formControlName="password" 
+            placeholder="••••••••"
+            autocomplete="current-password">
+          <button 
+            type="button" 
+            class="toggle-pwd-btn" 
+            (click)="togglePasswordVisibility()"
+            tabindex="-1">
+            {{ showPwd ? 'Ocultar' : 'Ver' }}
+          </button>
+        </div>
+        <span class="error-text" *ngIf="esCampoInvalido('password')">
+          {{ errorPassword }}
+        </span>
+      </div>
+
+      <div class="alert-box error" *ngIf="errorMessage">
+        <span class="alert-icon">⚠️</span>
+        {{ errorMessage }}
+      </div>
+
+      <button type="submit" class="btn-submit" [disabled]="loading || loginForm.invalid">
+        <span *ngIf="!loading">Iniciar Sesión</span>
+        <div class="spinner" *ngIf="loading"></div>
+        <span *ngIf="loading">Validando...</span>
+      </button>
+
     </form>
-
-    <div class="card-footer">
-      <i class="ti ti-shield-lock"></i>
-      <span>Acceso Restringido · Grupo Cordillera 2026</span>
-    </div>
-
   </div>
 </div>

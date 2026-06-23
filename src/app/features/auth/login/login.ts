@@ -62,19 +62,32 @@ export class LoginComponent {
     return '';
   }
 
+  togglePasswordVisibility(): void {
+    this.showPwd = !this.showPwd;
+  }
+
   onSubmit(): void {
+    // 1. Forzamos a Angular a leer los valores actuales para evitar el bug del autocompletado
+    this.loginForm.updateValueAndValidity();
+
+    // 2. Revisamos si hay errores y marcamos todo para mostrar el feedback visual
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       this.errorMessage = 'Por favor, corrija los errores marcados en rojo.';
       return;
     }
 
+    // 3. Prevenimos múltiples clics
+    if (this.loading) {
+      return;
+    }
+
     this.loading = true;
     this.errorMessage = '';
 
+    // 4. Llamada al backend
     this.authService.login(this.loginForm.value).subscribe({
       next: () => {
-        // Obtenemos el rol y lo pasamos a mayúsculas por si acaso
         const rol = (this.authService.obtenerRol() || '').toUpperCase();
         
         if (rol === 'GERENTE' || rol === 'ADMIN') {
@@ -82,13 +95,13 @@ export class LoginComponent {
         } else if (rol === 'CAJERO' || rol === 'BODEGUERO') {
           this.router.navigate(['/caja']);
         } else {
-          // Fallback por defecto si no reconoce el rol exacto
-          this.router.navigate(['/caja']);
+          this.router.navigate(['/caja']); // Fallback por defecto
         }
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = 'Credenciales incorrectas o usuario no encontrado.';
+        // Capturamos el mensaje del backend si existe, si no, uno genérico
+        this.errorMessage = err.error || 'Credenciales incorrectas o usuario no encontrado.';
         console.error('Detalles del error HTTP:', err);
       }
     });
