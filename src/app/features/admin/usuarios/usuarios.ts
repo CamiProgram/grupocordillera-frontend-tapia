@@ -1,15 +1,15 @@
 import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { AuthService as SeguridadService } from '../../../core/security/auth';
 
 export interface Usuario {
   id?: number;
   nombre: string;
-  correo: string;
+  email: string;
   rol: string;
   password?: string;
-  fechaCreacion?: string;
 }
 
 @Component({
@@ -27,34 +27,47 @@ export class UsuariosComponent implements OnInit {
   modoEdicion: boolean = false;
   usuarioActual: Usuario = this.nuevoUsuarioVacio();
 
-  rolesDisponibles: string[] = ['Cajero', 'Bodeguero', 'Gerente', 'Admin'];
+  rolesDisponibles: string[] = ['Cajero', 'Bodeguero', 'Gerente', 'ADMIN'];
 
-  private readonly API_URL = 'http://localhost:8090/api/usuarios';
+  // 🚀 ACTUALIZADO: Puerto 8090 donde el API Gateway está realmente escuchando
+  private readonly API_URL = 'http://localhost:8090/api/admin/usuarios';
 
-  constructor(private http: HttpClient, private cdr: ChangeDetectorRef) {}
+  constructor(
+    private http: HttpClient, 
+    private cdr: ChangeDetectorRef,
+    private seguridadService: SeguridadService 
+  ) {}
 
   ngOnInit(): void {
     this.cargarUsuarios();
+  }
+
+  // Prepara el Token exigido por el Controlador Java
+  private getHeaders() {
+    const token = this.seguridadService.obtenerToken() || '';
+    return {
+      headers: new HttpHeaders({
+        'Authorization': `Bearer ${token}`
+      })
+    };
   }
 
   cargarUsuarios(): void {
     this.cargando = true;
     this.cdr.detectChanges(); 
 
-    this.http.get<Usuario[]>(this.API_URL).subscribe({
+    this.http.get<Usuario[]>(this.API_URL, this.getHeaders()).subscribe({
       next: (data) => {
-        // 🚀 MAGIA AQUÍ: Si el backend responde pero no hay usuarios, mostramos la maqueta
         if (data && data.length > 0) {
           this.usuarios = data;
         } else {
-          console.warn('La base de datos respondió, pero está vacía. Cargando maqueta visual...');
-          this.cargarDatosMock();
+          this.cargarDatosMock(); 
         }
         this.cargando = false;
         this.cdr.detectChanges(); 
       },
       error: (err) => {
-        console.error('Error de conexión. Cargando maqueta visual...', err);
+        console.error('Error de conexión real, cargando maqueta:', err);
         this.cargarDatosMock();
         this.cargando = false;
         this.cdr.detectChanges();
@@ -62,18 +75,15 @@ export class UsuariosComponent implements OnInit {
     });
   }
 
-  // Función para inyectar los datos de prueba y ver los colores
   cargarDatosMock(): void {
     this.usuarios = [
-      { id: 1, nombre: 'Camilo Tapia', correo: 'camilotapia282@gmail.com', rol: 'Admin', fechaCreacion: '2026-01-15' },
-      { id: 2, nombre: 'Juan Pérez', correo: 'juan.perez@grupocordillera.cl', rol: 'Cajero', fechaCreacion: '2026-03-22' },
-      { id: 3, nombre: 'María González', correo: 'm.gonzalez@grupocordillera.cl', rol: 'Bodeguero', fechaCreacion: '2026-05-10' },
-      { id: 4, nombre: 'Roberto Soto', correo: 'r.soto@grupocordillera.cl', rol: 'Gerente', fechaCreacion: '2026-06-01' }
+      { id: 1, nombre: 'Camilo Tapia', email: 'camilotapia282@gmail.com', rol: 'ADMIN' },
+      { id: 2, nombre: 'Juan Pérez', email: 'juan@grupocordillera.cl', rol: 'Cajero' }
     ];
   }
 
   nuevoUsuarioVacio(): Usuario {
-    return { nombre: '', correo: '', rol: 'Cajero', password: '' };
+    return { nombre: '', email: '', rol: 'Cajero', password: '' };
   }
 
   abrirModalNuevo(): void {
@@ -97,14 +107,14 @@ export class UsuariosComponent implements OnInit {
 
   guardarUsuario(): void {
     if (this.modoEdicion && this.usuarioActual.id) {
-      this.http.put<Usuario>(`${this.API_URL}/${this.usuarioActual.id}`, this.usuarioActual).subscribe({
+      this.http.put<Usuario>(`${this.API_URL}/modificar/${this.usuarioActual.id}`, this.usuarioActual, this.getHeaders()).subscribe({
         next: () => { this.cerrarModal(); this.cargarUsuarios(); },
-        error: () => { this.cerrarModal(); this.cargarUsuarios(); }
+        error: (err) => { console.error('Error al modificar', err); this.cerrarModal(); this.cargarUsuarios(); }
       });
     } else {
-      this.http.post<Usuario>(this.API_URL, this.usuarioActual).subscribe({
+      this.http.post<Usuario>(`${this.API_URL}/crear`, this.usuarioActual, this.getHeaders()).subscribe({
         next: () => { this.cerrarModal(); this.cargarUsuarios(); },
-        error: () => { this.cerrarModal(); this.cargarUsuarios(); }
+        error: (err) => { console.error('Error al crear', err); this.cerrarModal(); this.cargarUsuarios(); }
       });
     }
   }

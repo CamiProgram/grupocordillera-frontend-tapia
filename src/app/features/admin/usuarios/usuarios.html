@@ -36,10 +36,10 @@
           <tr *ngFor="let u of usuarios">
             <td class="font-monospace text-muted">#USR-{{ u.id ? (u.id | number:'3.0-0') : '000' }}</td>
             <td><strong>{{ u.nombre }}</strong></td>
-            <td class="text-primary font-weight-bold">{{ u.correo }}</td>
+            <td class="text-primary font-weight-bold">{{ u.email }}</td>
             <td>
               <span class="role-badge" [ngClass]="{
-                'role-admin': u.rol === 'Admin',
+                'role-admin': u.rol === 'ADMIN',
                 'role-gerente': u.rol === 'Gerente',
                 'role-cajero': u.rol === 'Cajero',
                 'role-bodeguero': u.rol === 'Bodeguero'
@@ -48,7 +48,7 @@
               </span>
             </td>
             <td>
-              <span class="perm-indicator total" *ngIf="u.rol === 'Admin' || u.rol === 'Gerente'">🔓 Acceso Total</span>
+              <span class="perm-indicator total" *ngIf="u.rol === 'ADMIN' || u.rol === 'Gerente'">🔓 Acceso Total</span>
               <span class="perm-indicator parcial" *ngIf="u.rol === 'Cajero' || u.rol === 'Bodeguero'">🔒 Restringido</span>
             </td>
             <td class="text-center">
@@ -77,7 +77,7 @@
           </div>
           <div class="form-field">
             <label>Correo Electrónico Corporativo</label>
-            <input type="email" [(ngModel)]="usuarioActual.correo" placeholder="Ej: usuario@grupocordillera.cl">
+            <input type="email" [(ngModel)]="usuarioActual.email" placeholder="Ej: usuario@grupocordillera.cl">
           </div>
           <div class="form-field">
             <label>Rol de Sistema</label>
