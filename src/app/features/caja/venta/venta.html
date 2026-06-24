@@ -18,6 +18,13 @@
       </button>
     </div>
   </header>
+  <div *ngIf="mensajeExito" style="background-color: #d1fae5; color: #065f46; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; font-weight: bold; text-align: center; border: 1px solid #10b981;">
+  {{ mensajeExito }}
+</div>
+
+<div *ngIf="mensajeError" style="background-color: #fee2e2; color: #b91c1c; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; font-weight: bold; text-align: center; border: 1px solid #ef4444;">
+  {{ mensajeError }}
+</div>
 
   <main class="workspace">
     

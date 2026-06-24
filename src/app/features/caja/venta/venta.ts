@@ -56,9 +56,12 @@ export class VentaComponent implements OnInit, OnDestroy {
   carrito: DetalleVenta[] = [];
   total: number = 0;
   cargando: boolean = false;
-  mensajeError: string = '';
   
-  // 🚀 CATÁLOGO DESDE LA BASE DE DATOS
+  // 🚀 Nuevos estados para los mensajes visuales
+  mensajeError: string = '';
+  mensajeExito: string = '';
+  
+  // CATÁLOGO DESDE LA BASE DE DATOS
   productosDesdeAPI: Producto[] = [];
   productosFiltrados: Producto[] = [];
   
@@ -83,7 +86,7 @@ export class VentaComponent implements OnInit, OnDestroy {
     const rol = this.authService.obtenerRol();
     this.nombreCajero = rol ? rol.toUpperCase() : 'CAJERO';
     
-    // 🚀 INICIAMOS LA DESCARGA DEL INVENTARIO AL ABRIR LA CAJA
+    // INICIAMOS LA DESCARGA DEL INVENTARIO AL ABRIR LA CAJA
     this.cargarProductos();
     this.enfocarInput();
   }
@@ -101,7 +104,7 @@ export class VentaComponent implements OnInit, OnDestroy {
     this.http.get<Producto[]>(`${this.API_GATEWAY}/api/inventario/productos`).subscribe({
       next: (data) => {
         this.productosDesdeAPI = data;
-        console.log('📦 Catálogo sincronizado desde DB PostgreSQL:', this.productosDesdeAPI);
+        console.log('📦 Catálogo actualizado desde DB:', this.productosDesdeAPI);
       },
       error: (err) => {
         console.error('❌ Error sincronizando inventario a través del Gateway:', err);
@@ -127,7 +130,7 @@ export class VentaComponent implements OnInit, OnDestroy {
       this.productosFiltrados = [];
       return;
     }
-    // Ahora filtramos sobre la data real de la API
+    // Filtramos sobre la data real de la API
     this.productosFiltrados = this.productosDesdeAPI.filter(p => 
       p.nombre.toLowerCase().includes(termino) || p.codigoBarras.includes(termino)
     );
@@ -187,6 +190,7 @@ export class VentaComponent implements OnInit, OnDestroy {
   private procesarCodigo(codigo: string): void {
     this.cargando = true;
     this.mensajeError = '';
+    this.mensajeExito = '';
 
     // Búsqueda en el catálogo real
     const prod = this.productosDesdeAPI.find(p => p.codigoBarras === codigo);
@@ -206,9 +210,20 @@ export class VentaComponent implements OnInit, OnDestroy {
   agregarAlCarrito(producto: Producto): void {
     const itemExistente = this.carrito.find(item => item.producto.id === producto.id);
     if (itemExistente) {
+      // 🚀 Validación visual: Evitar que agregue más del stock disponible
+      if (itemExistente.cantidad >= producto.stock) {
+        this.mensajeError = `Solo hay ${producto.stock} unidades de ${producto.nombre} en stock.`;
+        setTimeout(() => this.mensajeError = '', 4000);
+        return;
+      }
       itemExistente.cantidad++;
       itemExistente.subtotal = itemExistente.cantidad * itemExistente.producto.precio;
     } else {
+      if (producto.stock <= 0) {
+        this.mensajeError = `${producto.nombre} está agotado.`;
+        setTimeout(() => this.mensajeError = '', 4000);
+        return;
+      }
       this.carrito.push({ producto, cantidad: 1, subtotal: producto.precio });
     }
     this.calcularTotal();
@@ -221,6 +236,11 @@ export class VentaComponent implements OnInit, OnDestroy {
   modificarCantidad(index: number, operacion: 'sumar' | 'restar'): void {
     const item = this.carrito[index];
     if (operacion === 'sumar') {
+      if (item.cantidad >= item.producto.stock) {
+        this.mensajeError = `Stock máximo alcanzado para ${item.producto.nombre}.`;
+        setTimeout(() => this.mensajeError = '', 3000);
+        return;
+      }
       item.cantidad++;
     } else if (operacion === 'restar' && item.cantidad > 1) {
       item.cantidad--;
@@ -241,18 +261,22 @@ export class VentaComponent implements OnInit, OnDestroy {
     if (confirm('¿Confirma la anulación completa de la transacción en curso?')) {
       this.carrito = [];
       this.total = 0;
+      this.mensajeExito = '';
       this.enfocarInput();
     }
   }
 
   // ==========================================
-  // 🚀 CONEXIÓN REAL CON GC_VENTAS (Aislado)
+  // 🚀 CONEXIÓN REAL CON GC_VENTAS 
   // ==========================================
   procesarPago(): void {
     if (this.carrito.length === 0) return;
     this.cargando = true;
+    this.mensajeError = '';
+    this.mensajeExito = '';
 
     const payloadVenta = {
+      clienteRut: '11111111-1', 
       total: this.total,
       sucursal: this.sucursalActual,
       comuna: this.comunaActual,
@@ -265,21 +289,30 @@ export class VentaComponent implements OnInit, OnDestroy {
       }))
     };
 
-    // 🚀 APUNTANDO DIRECTO AL MICROSERVICIO (SIN GATEWAY)
     this.http.post(`http://localhost:8092/api/ventas/registrar`, payloadVenta).subscribe({
       next: () => {
-        alert('BOLETA ELECTRÓNICA EMITIDA CON ÉXITO');
+        // 1. Mostramos el mensaje visual de éxito (reemplaza el alert)
+        this.mensajeExito = '✅ ¡BOLETA ELECTRÓNICA EMITIDA CON ÉXITO!';
+        
+        // 2. Limpiamos la caja
         this.carrito = [];
         this.total = 0;
         this.cargando = false;
         this.enfocarInput();
+
+        // 3. 🚀 MAGIA: Refrescamos el inventario en tiempo real para actualizar el stock local
+        this.cargarProductos();
+
+        // 4. Ocultamos el mensaje de éxito después de 5 segundos
+        setTimeout(() => this.mensajeExito = '', 5000);
       },
       error: (err) => {
         console.error('Fallo en Ventas Directo:', err);
-        // Si falla, avisamos exactamente qué código HTTP devolvió el servidor
-        alert(`Error al registrar venta (Cód: ${err.status}). Verifique la consola para detalles.`);
+        // Mostramos el error visualmente en vez del alert
+        this.mensajeError = `Error al registrar venta. Verifique consola o stock.`;
         this.cargando = false;
         this.enfocarInput();
+        setTimeout(() => this.mensajeError = '', 6000);
       }
     });
   }
