@@ -1,38 +1,87 @@
 import { Routes } from '@angular/router';
 
-// Importación de Componentes
+// 📌 Importación de Componentes de Autenticación y Operación
 import { LoginComponent } from './features/auth/login/login'; 
 import { VentaComponent } from './features/caja/venta/venta'; 
-import { Dashboard } from './features/admin/dashboard/dashboard'; // Asegúrate de que el nombre coincida con tu exportación
 
-// Importación del Escudo de Seguridad
+// 📌 Importación de Componentes de Administración (Estructura de Panel)
+import { DashboardComponent } from './features/admin/dashboard/dashboard'; 
+import { EstadisticasComponent } from './features/admin/estadisticas/estadisticas';
+import { InventarioComponent } from './features/admin/inventario/inventario';
+import { UsuariosComponent } from './features/admin/usuarios/usuarios'; // 🚀 IMPORTACIÓN AÑADIDA
+
+// 📌 Importación del Escudo de Seguridad (Guardián de Roles)
 import { roleGuard } from './core/security/role-guard'; 
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  // Redirección inicial por defecto al Login del sistema
+  { 
+    path: '', 
+    redirectTo: 'login', 
+    pathMatch: 'full' 
+  },
   
-  // Ruta Pública
+  // Ruta Pública: Formulario de Acceso Unificado
   { 
     path: 'login', 
     component: LoginComponent 
   },
   
-  // Ruta Protegida: Operación de Supermercado
+  // Ruta Protegida: Punto de Venta y Operación de Supermercado (Escaneo e Impresión)
   { 
     path: 'caja', 
     component: VentaComponent,
     canActivate: [roleGuard],
-    data: { roles: ['Cajero', 'Bodeguero', 'Gerente', 'Admin'] } // Todos los roles operativos y superiores
+    data: { roles: ['Cajero', 'Bodeguero', 'Gerente', 'Admin'] } 
   },
 
-  // Ruta Protegida: Panel Gerencial
+  // Ruta Protegida: Panel Gerencial y de Administración de Sistemas
   { 
     path: 'dashboard', 
-    component: Dashboard,
+    component: DashboardComponent,
     canActivate: [roleGuard],
-    data: { roles: ['Gerente', 'Admin'] } // Acceso estricto solo para jefaturas
+    data: { roles: ['Gerente', 'Admin'] },
+    children: [
+      // Al ingresar a /dashboard, se fuerza la carga automática del módulo de analíticas
+      { 
+        path: '', 
+        redirectTo: 'estadisticas', 
+        pathMatch: 'full' 
+      },
+      
+      // Módulo 1: Vista de Métricas de Venta y Gráficos Financieros
+      { 
+        path: 'estadisticas', 
+        component: EstadisticasComponent 
+      },
+      
+      // Módulo 2: Mantenedor CRUD de Catálogo de Productos y Niveles de Stock
+      { 
+        path: 'inventario', 
+        component: InventarioComponent 
+      },
+      
+      // 🚀 Módulo 3: Mantenedor de Control de Usuarios CONECTADO
+      { 
+        path: 'usuarios', 
+        component: UsuariosComponent 
+      },
+      
+      // Módulos en desarrollo (Estructuras de rutas hijas temporales para evitar redirección forzada)
+      { 
+        path: 'ventas', 
+        children: [] 
+      },
+      { 
+        path: 'testing', 
+        children: [] 
+      }
+    ]
   },
 
-  // Ruta comodín (Si escriben una URL que no existe, los manda al login)
-  { path: '**', redirectTo: 'login' }
+  // Ruta comodín de resguardo: Captura URLs inexistentes y redirige a la raíz de seguridad
+  { 
+    path: '**', 
+    redirectTo: 'login' 
+  }
 ];

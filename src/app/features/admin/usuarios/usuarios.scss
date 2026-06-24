@@ -1,0 +1,44 @@
+/* --- HEREDAMOS EL DISEÑO BASE DEL INVENTARIO --- */
+@import '../inventario/inventario.scss';
+
+/* --- DISEÑO ESPECÍFICO DE ETIQUETAS DE ROLES --- */
+.text-primary {
+  color: #3366ff;
+}
+
+.role-badge {
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+
+  &.role-admin { 
+    background-color: #3366ff; 
+    color: white; 
+    box-shadow: 0 2px 6px rgba(51, 102, 255, 0.25); 
+  }
+  &.role-gerente { 
+    background-color: #db2c66; 
+    color: white; 
+    box-shadow: 0 2px 6px rgba(219, 44, 102, 0.25); 
+  }
+  &.role-cajero { 
+    background-color: #e3faf2; 
+    color: #00b887; 
+  }
+  &.role-bodeguero { 
+    background-color: #fff4e6; 
+    color: #ffaa00; 
+  }
+}
+
+.perm-indicator {
+  font-size: 0.85rem; 
+  font-weight: 600;
+  
+  &.total { color: #222b45; }
+  &.parcial { color: #8f9bb3; }
+}

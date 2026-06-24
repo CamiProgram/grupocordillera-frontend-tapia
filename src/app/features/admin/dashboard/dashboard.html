@@ -1,1 +1,58 @@
-<p>dashboard works!</p>
+<div class="ngx-layout">
+  <aside class="ngx-sidebar" [class.collapsed]="!sidebarAbierta">
+    <div class="logo-container">
+      <h2><b>Grupo</b> Cordillera</h2>
+    </div>
+    
+    <nav class="ngx-menu">
+      <div class="menu-label">ANALÍTICAS</div>
+      <a routerLink="/dashboard/estadisticas" routerLinkActive="active" class="menu-item">
+        <span class="icon">📊</span> <span class="menu-text">Dashboard Analytics</span>
+      </a>
+      <a routerLink="/dashboard/ventas" routerLinkActive="active" class="menu-item">
+        <span class="icon">🧾</span> <span class="menu-text">Registro de Boletas</span>
+      </a>
+      
+      <div class="menu-label">MANTENEDORES</div>
+      <a routerLink="/dashboard/inventario" routerLinkActive="active" class="menu-item">
+        <span class="icon">📦</span> <span class="menu-text">Gestión Inventario</span>
+      </a>
+      <a routerLink="/dashboard/usuarios" routerLinkActive="active" class="menu-item">
+        <span class="icon">👥</span> <span class="menu-text">Control Usuarios</span>
+      </a>
+      
+      <div class="menu-label">DEV & MONITOREO</div>
+      <a routerLink="/dashboard/testing" routerLinkActive="active" class="menu-item">
+        <span class="icon">⚡</span> <span class="menu-text">Testing & APIs</span>
+      </a>
+    </nav>
+  </aside>
+
+  <main class="ngx-main">
+    
+    <header class="ngx-header">
+      <div class="header-left">
+        <button class="menu-toggle" (click)="toggleSidebar()">☰</button>
+        <div class="theme-selector">Light ▼</div>
+      </div>
+
+      <div class="header-right">
+        <div class="actions">
+          <span class="action-icon">🔍</span>
+          <span class="action-icon">✉️</span>
+          <span class="action-icon">🔔</span>
+        </div>
+        <div class="user-profile">
+          <div class="avatar">👨‍💻</div>
+          <span class="name">{{ nombreAdmin }}</span>
+        </div>
+        <button class="btn-logout" (click)="cerrarSesion()">Salir</button>
+      </div>
+    </header>
+
+    <div class="ngx-content">
+      <router-outlet></router-outlet>
+    </div>
+    
+  </main>
+</div>

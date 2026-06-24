@@ -1,0 +1,73 @@
+<div class="stats-container">
+  
+  <div class="kpi-row">
+    <div class="kpi-card">
+      <div class="kpi-info">
+        <span class="kpi-title">Recaudación Global</span>
+        <h3 class="kpi-value">${{ totalRecaudado | number:'1.0-0' }}</h3>
+        <span class="kpi-trend positive">▲ 12% vs ayer</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-info">
+        <span class="kpi-title">Boletas Emitidas</span>
+        <h3 class="kpi-value">{{ boletasEmitidas }}</h3>
+        <span class="kpi-trend positive">▲ 5% vs ayer</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-info">
+        <span class="kpi-title">Producto Estrella</span>
+        <h3 class="kpi-value star-product">{{ productoEstrella }}</h3>
+        <span class="kpi-trend neutral">Líder en ventas</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-row">
+    <div class="chart-card flex-2">
+      <div class="card-header">
+        <h4>Curva de Ventas (Semanal)</h4>
+      </div>
+      <div class="canvas-container">
+        <canvas #graficoVentas></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card flex-1">
+      <div class="card-header">
+        <h4>Distribución por Comuna</h4>
+      </div>
+      <div class="canvas-container">
+        <canvas #graficoComunas></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-card mt-3">
+    <div class="card-header">
+      <h4>📍 Rendimiento de Productos por Ubicación Geográfica</h4>
+    </div>
+    <div class="table-responsive">
+      <table class="ngx-custom-table">
+        <thead>
+          <tr>
+            <th>Región / Comuna</th>
+            <th>Total Recaudado</th>
+            <th>🏆 Producto Más Vendido</th>
+            <th>📉 Producto Menos Vendido</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of analiticaComunas">
+            <td><strong>{{ c.nombre }}</strong></td>
+            <td class="font-weight-bold text-success">${{ c.total | number:'1.0-0' }}</td>
+            <td class="product-top">⭐ {{ c.masVendido }}</td>
+            <td class="product-bottom">⚠️ {{ c.menosVendido }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>

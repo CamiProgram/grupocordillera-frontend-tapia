@@ -1,0 +1,101 @@
+<div class="ngx-container">
+  <div class="ngx-card-header-main">
+    <div class="header-title-block">
+      <h2>👥 Gestión de Usuarios y Roles</h2>
+      <p class="subtitle">Administración de credenciales y permisos de acceso al sistema</p>
+    </div>
+    <div class="action-buttons-group">
+      <button class="btn-secondary btn-refresh" (click)="cargarUsuarios()" [disabled]="cargando">
+        <span class="icon" [class.spinning]="cargando">🔄</span> Recargar Datos
+      </button>
+      <button class="btn-primary" (click)="abrirModalNuevo()">
+        <span class="icon">+</span> Nuevo Usuario
+      </button>
+    </div>
+  </div>
+
+  <div class="ngx-table-card">
+    <div class="loading-overlay" *ngIf="cargando">
+      <div class="spinner"></div>
+      <p>Sincronizando nómina de personal...</p>
+    </div>
+
+    <div class="table-responsive" *ngIf="!cargando">
+      <table class="ngx-custom-table">
+        <thead>
+          <tr>
+            <th>ID Sistema</th>
+            <th>Nombre Completo</th>
+            <th>Correo Electrónico</th>
+            <th>Rol de Seguridad</th>
+            <th>Nivel de Acceso</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let u of usuarios">
+            <td class="font-monospace text-muted">#USR-{{ u.id ? (u.id | number:'3.0-0') : '000' }}</td>
+            <td><strong>{{ u.nombre }}</strong></td>
+            <td class="text-primary font-weight-bold">{{ u.correo }}</td>
+            <td>
+              <span class="role-badge" [ngClass]="{
+                'role-admin': u.rol === 'Admin',
+                'role-gerente': u.rol === 'Gerente',
+                'role-cajero': u.rol === 'Cajero',
+                'role-bodeguero': u.rol === 'Bodeguero'
+              }">
+                {{ u.rol }}
+              </span>
+            </td>
+            <td>
+              <span class="perm-indicator total" *ngIf="u.rol === 'Admin' || u.rol === 'Gerente'">🔓 Acceso Total</span>
+              <span class="perm-indicator parcial" *ngIf="u.rol === 'Cajero' || u.rol === 'Bodeguero'">🔒 Restringido</span>
+            </td>
+            <td class="text-center">
+              <button class="btn-action edit" (click)="abrirModalEditar(u)">
+                🔑 Editar Perfil
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="modal-overlay" *ngIf="mostrarModal">
+    <div class="modal-window">
+      <div class="modal-header-block">
+        <h3>{{ modoEdicion ? '🔑 Modificar Perfil de Operador' : '👤 Alta de Nuevo Usuario' }}</h3>
+        <button class="close-x" (click)="cerrarModal()">×</button>
+      </div>
+
+      <div class="modal-body-form">
+        <div class="ngx-form-grid">
+          <div class="form-field full-width">
+            <label>Nombre Completo</label>
+            <input type="text" [(ngModel)]="usuarioActual.nombre" placeholder="Ej: Camilo Tapia">
+          </div>
+          <div class="form-field">
+            <label>Correo Electrónico Corporativo</label>
+            <input type="email" [(ngModel)]="usuarioActual.correo" placeholder="Ej: usuario@grupocordillera.cl">
+          </div>
+          <div class="form-field">
+            <label>Rol de Sistema</label>
+            <select [(ngModel)]="usuarioActual.rol">
+              <option *ngFor="let rol of rolesDisponibles" [value]="rol">{{ rol }}</option>
+            </select>
+          </div>
+          <div class="form-field full-width">
+            <label>Contraseña {{ modoEdicion ? '(Dejar en blanco para mantener la actual)' : '' }}</label>
+            <input type="password" [(ngModel)]="usuarioActual.password" placeholder="••••••••••••">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-actions">
+        <button class="btn-cancel" (click)="cerrarModal()">Cancelar</button>
+        <button class="btn-save" (click)="guardarUsuario()">Guardar Usuario</button>
+      </div>
+    </div>
+  </div>
+</div>
