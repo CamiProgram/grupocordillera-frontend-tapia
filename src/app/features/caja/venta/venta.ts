@@ -57,6 +57,9 @@ export class VentaComponent implements OnInit, OnDestroy {
   total: number = 0;
   cargando: boolean = false;
   mensajeError: string = '';
+  
+  // 🚀 CATÁLOGO DESDE LA BASE DE DATOS
+  productosDesdeAPI: Producto[] = [];
   productosFiltrados: Producto[] = [];
   
   // Control de Cámara
@@ -70,14 +73,6 @@ export class VentaComponent implements OnInit, OnDestroy {
 
   private readonly API_GATEWAY = 'http://localhost:8090';
 
-  private dbProductos: Producto[] = [
-    { id: 1, codigoBarras: '12345', nombre: 'Bebida Cola 2L', precio: 2500, stock: 50 },
-    { id: 2, codigoBarras: '78910', nombre: 'Arroz Grano Largo 1Kg', precio: 1300, stock: 100 },
-    { id: 3, codigoBarras: '11121', nombre: 'Aceite Maravilla 1L', precio: 3200, stock: 30 },
-    { id: 4, codigoBarras: '44455', nombre: 'Fideos Espagueti 400g', precio: 990, stock: 80 },
-    { id: 5, codigoBarras: '66677', nombre: 'Leche Entera 1L', precio: 1100, stock: 60 }
-  ];
-
   constructor(
     private http: HttpClient,
     private authService: AuthService,
@@ -87,6 +82,9 @@ export class VentaComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     const rol = this.authService.obtenerRol();
     this.nombreCajero = rol ? rol.toUpperCase() : 'CAJERO';
+    
+    // 🚀 INICIAMOS LA DESCARGA DEL INVENTARIO AL ABRIR LA CAJA
+    this.cargarProductos();
     this.enfocarInput();
   }
 
@@ -94,6 +92,23 @@ export class VentaComponent implements OnInit, OnDestroy {
     if (this.scanner && this.scanner.isStart) {
       this.scanner.stop();
     }
+  }
+
+  // ==========================================
+  // 🌐 CONEXIÓN REAL CON GC_INVENTARIO_COMPRAS
+  // ==========================================
+  cargarProductos(): void {
+    this.http.get<Producto[]>(`${this.API_GATEWAY}/api/inventario/productos`).subscribe({
+      next: (data) => {
+        this.productosDesdeAPI = data;
+        console.log('📦 Catálogo sincronizado desde DB PostgreSQL:', this.productosDesdeAPI);
+      },
+      error: (err) => {
+        console.error('❌ Error sincronizando inventario a través del Gateway:', err);
+        this.mensajeError = 'Error de conexión con el servidor de inventario.';
+        setTimeout(() => this.mensajeError = '', 5000);
+      }
+    });
   }
 
   enfocarInput(): void {
@@ -112,7 +127,8 @@ export class VentaComponent implements OnInit, OnDestroy {
       this.productosFiltrados = [];
       return;
     }
-    this.productosFiltrados = this.dbProductos.filter(p => 
+    // Ahora filtramos sobre la data real de la API
+    this.productosFiltrados = this.productosDesdeAPI.filter(p => 
       p.nombre.toLowerCase().includes(termino) || p.codigoBarras.includes(termino)
     );
   }
@@ -129,20 +145,14 @@ export class VentaComponent implements OnInit, OnDestroy {
     this.procesarCodigo(this.codigoBarras.trim());
   }
 
-  // ==========================================
-  // 📸 LÓGICA DE CÁMARA CORREGIDA
-  // ==========================================
-
   toggleCamara(): void {
     if (!this.scanner) return;
 
     if (this.camaraActiva) {
-      // APAGAR
       this.camaraActiva = false;
       this.scanner.stop();
       this.enfocarInput();
     } else {
-      // ENCENDER: Primero abrimos el CSS, y luego arrancamos el video
       this.camaraActiva = true;
       setTimeout(() => {
         this.scanner.start();
@@ -165,7 +175,6 @@ export class VentaComponent implements OnInit, OnDestroy {
         const codigoLimpio = codigoLeido.replace(/[^0-9]/g, '');
         this.procesarCodigo(codigoLimpio);
         
-        // Apagamos la cámara correctamente al tener éxito
         this.camaraActiva = false;
         if (this.scanner && this.scanner.isStart) {
           this.scanner.stop();
@@ -175,18 +184,17 @@ export class VentaComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ==========================================
-
   private procesarCodigo(codigo: string): void {
     this.cargando = true;
     this.mensajeError = '';
 
-    const prod = this.dbProductos.find(p => p.codigoBarras === codigo);
+    // Búsqueda en el catálogo real
+    const prod = this.productosDesdeAPI.find(p => p.codigoBarras === codigo);
 
     if (prod) {
       this.agregarAlCarrito(prod);
     } else {
-      this.mensajeError = `Código [${codigo}] no existe en los registros actuales.`;
+      this.mensajeError = `Código [${codigo}] no existe en la base de datos.`;
       setTimeout(() => this.mensajeError = '', 4000);
     }
 
@@ -237,6 +245,9 @@ export class VentaComponent implements OnInit, OnDestroy {
     }
   }
 
+  // ==========================================
+  // 🚀 CONEXIÓN REAL CON GC_VENTAS (Aislado)
+  // ==========================================
   procesarPago(): void {
     if (this.carrito.length === 0) return;
     this.cargando = true;
@@ -254,7 +265,8 @@ export class VentaComponent implements OnInit, OnDestroy {
       }))
     };
 
-    this.http.post(`${this.API_GATEWAY}/api/ventas`, payloadVenta).subscribe({
+    // 🚀 APUNTANDO DIRECTO AL MICROSERVICIO (SIN GATEWAY)
+    this.http.post(`http://localhost:8092/api/ventas/registrar`, payloadVenta).subscribe({
       next: () => {
         alert('BOLETA ELECTRÓNICA EMITIDA CON ÉXITO');
         this.carrito = [];
@@ -263,10 +275,9 @@ export class VentaComponent implements OnInit, OnDestroy {
         this.enfocarInput();
       },
       error: (err) => {
-        console.error('Fallo en Gateway/Ventas:', err);
-        alert('Sincronización interrumpida. Transacción respaldada localmente en modo Contingencia.');
-        this.carrito = [];
-        this.total = 0;
+        console.error('Fallo en Ventas Directo:', err);
+        // Si falla, avisamos exactamente qué código HTTP devolvió el servidor
+        alert(`Error al registrar venta (Cód: ${err.status}). Verifique la consola para detalles.`);
         this.cargando = false;
         this.enfocarInput();
       }
