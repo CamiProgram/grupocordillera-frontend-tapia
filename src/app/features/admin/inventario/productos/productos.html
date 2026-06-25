@@ -1,0 +1,110 @@
+<div class="ngx-container">
+  <div class="ngx-card-header-main">
+    <div class="header-title-block">
+      <h2>📦 Catálogo y Control de Inventario</h2>
+      <p class="subtitle">Gestión centralizada de productos, precios y niveles de stock</p>
+    </div>
+    <div class="action-buttons-group">
+      <button class="btn-secondary btn-refresh" (click)="cargarProductos()" [disabled]="cargando">
+        <span class="icon" [class.spinning]="cargando">🔄</span> Recargar
+      </button>
+      <button class="btn-primary" (click)="abrirModalNuevo()">
+        <span class="icon">+</span> Ingresar Producto
+      </button>
+    </div>
+  </div>
+
+  <div class="ngx-table-card">
+    <div class="loading-overlay" *ngIf="cargando">
+      <div class="spinner"></div>
+      <p>Sincronizando catálogo con bodega central...</p>
+    </div>
+
+    <div class="table-responsive" *ngIf="!cargando">
+      <table class="ngx-custom-table">
+        <thead>
+          <tr>
+            <th>Código de Barras</th>
+            <th>Producto</th>
+            <th>Marca</th>
+            <th>Categoría</th>
+            <th>Precio (CLP)</th>
+            <th>Stock</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of productos">
+            <td class="font-monospace text-muted">{{ p.codigoBarras }}</td>
+            <td>
+              <strong>{{ p.nombre }}</strong><br>
+              <small class="text-muted">{{ p.descripcion }}</small>
+            </td>
+            <td>{{ p.marca }}</td>
+            <td><span class="role-badge role-bodeguero">{{ p.categoria }}</span></td>
+            <td class="text-primary font-weight-bold">${{ p.precio | number:'1.0-0' }}</td>
+            <td>
+              <span class="perm-indicator total" *ngIf="p.stock > 10">📦 {{ p.stock }}</span>
+              <span class="perm-indicator parcial" *ngIf="p.stock <= 10 && p.stock > 0">⚠️ {{ p.stock }} (Bajo)</span>
+              <span class="perm-indicator" style="color: red; border-color: red;" *ngIf="p.stock === 0">❌ Agotado</span>
+            </td>
+            <td class="text-center">
+              <button class="btn-action edit" (click)="abrirModalEditar(p)">
+                ✏️ Editar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="modal-overlay" *ngIf="mostrarModal">
+    <div class="modal-window">
+      <div class="modal-header-block">
+        <h3>{{ modoEdicion ? '✏️ Editar Producto' : '📦 Nuevo Producto' }}</h3>
+        <button class="close-x" (click)="cerrarModal()">×</button>
+      </div>
+
+      <div class="modal-body-form">
+        <div class="ngx-form-grid">
+          <div class="form-field full-width">
+            <label>Código de Barras</label>
+            <input type="text" [(ngModel)]="productoActual.codigoBarras" placeholder="Ej: 780123456789">
+          </div>
+          <div class="form-field full-width">
+            <label>Nombre del Producto</label>
+            <input type="text" [(ngModel)]="productoActual.nombre" placeholder="Ej: Café Soluble 200g">
+          </div>
+          <div class="form-field full-width">
+            <label>Descripción / Detalles</label>
+            <input type="text" [(ngModel)]="productoActual.descripcion" placeholder="Ej: Frasco de vidrio">
+          </div>
+          <div class="form-field">
+            <label>Marca</label>
+            <input type="text" [(ngModel)]="productoActual.marca" placeholder="Ej: Nescafé">
+          </div>
+          <div class="form-field">
+            <label>Familia / Categoría</label>
+            <select [(ngModel)]="productoActual.categoria">
+              <option *ngFor="let cat of categoriasDisponibles" [value]="cat">{{ cat }}</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Precio Unitario (Venta)</label>
+            <input type="number" [(ngModel)]="productoActual.precio" placeholder="0">
+          </div>
+          <div class="form-field">
+            <label>Stock en Bodega</label>
+            <input type="number" [(ngModel)]="productoActual.stock" placeholder="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-actions">
+        <button class="btn-cancel" (click)="cerrarModal()">Cancelar</button>
+        <button class="btn-save" (click)="guardarProducto()">Guardar Catálogo</button>
+      </div>
+    </div>
+  </div>
+</div>

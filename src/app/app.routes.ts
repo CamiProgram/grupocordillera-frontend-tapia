@@ -7,8 +7,9 @@ import { VentaComponent } from './features/caja/venta/venta';
 // 📌 Importación de Componentes de Administración (Estructura de Panel)
 import { DashboardComponent } from './features/admin/dashboard/dashboard'; 
 import { EstadisticasComponent } from './features/admin/estadisticas/estadisticas';
-import { InventarioComponent } from './features/admin/inventario/inventario';
-import { UsuariosComponent } from './features/admin/usuarios/usuarios'; // 🚀 IMPORTACIÓN AÑADIDA
+// 🚀 FIX: Ruta corregida incluyendo la carpeta "admin"
+import { ProductosComponent } from './features/admin/inventario/productos/productos'; 
+import { UsuariosComponent } from './features/admin/usuarios/usuarios'; 
 
 // 📌 Importación del Escudo de Seguridad (Guardián de Roles)
 import { roleGuard } from './core/security/role-guard'; 
@@ -55,13 +56,13 @@ export const routes: Routes = [
         component: EstadisticasComponent 
       },
       
-      // Módulo 2: Mantenedor CRUD de Catálogo de Productos y Niveles de Stock
+      // Módulo 2: Maestro y Control de Stock unificado con el nuevo componente
       { 
         path: 'inventario', 
-        component: InventarioComponent 
+        component: ProductosComponent 
       },
       
-      // 🚀 Módulo 3: Mantenedor de Control de Usuarios CONECTADO
+      // Módulo 3: Mantenedor de Control de Usuarios CONECTADO
       { 
         path: 'usuarios', 
         component: UsuariosComponent 
